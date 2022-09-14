@@ -21,94 +21,67 @@
 
 void configure_tls(struct tls_config *config, struct tls *s_tls);
 
-void open_connection(struct sockaddr_in *server, int sock);
+int open_connection();
 
 int run_server() {
     printf("Sono il server\n");
     struct tls *s_tls;
     struct tls *c_tls;
     struct tls_config *config;
-    int sock = 0;
-    struct sockaddr_in server, client;
+    //struct sockaddr_in server, client_socket;
 
     //vengono fatte tutte le configurazioni su s_tls
     configure_tls(config, s_tls);
 
-    open_connection(&server, &sock);
+    int server_socket = open_connection();
 
-    socklen_t client_size = sizeof(client);
-    int sc = accept(sock, (struct sockaddr *) &client, &client_size);
+    struct sockaddr_in server_addr; /*socket for server*/
+    socklen_t len = sizeof(server_addr);
 
-    if (tls_accept_socket(s_tls, &c_tls, sc) < 0) {
+    listen(server_socket, 1);
+    int client_socket = accept(server_socket, (struct sockaddr *) &server_addr, &len); /* accept connection as usual */
+    printf("Connection: %s:%dn", inet_ntoa(server_addr.sin_addr),
+           ntohs(server_addr.sin_port)); /*printing connected client information*/
+
+
+    if (tls_accept_socket(s_tls, &c_tls, client_socket) < 0) {
         perror("server tls_accept_socket error\n");
         abort();
     }
 
-    char *msg = "Ciao client";
-    tls_write(c_tls, msg, strlen(msg));
-
-    struct pollfd pfd[2];
-    pfd[0].fd = 0;
-    pfd[0].events = POLLIN;
-    pfd[1].fd = sc;
-    pfd[1].events = POLLIN;
-
-    char bufs[255];
-    ssize_t outlen = 0;
-    while (bufs[0] != ':' && bufs[1] != 'q') {
-        poll(pfd, 2, -1);
-        bzero(bufs, 1000);
-        bzero(bufs, 1000);
-        if (pfd[0].revents & POLLIN) {
-            int q = read(0, bufs, 1000);
-            tls_write(c_tls, bufs, q);
-        }
-        if (pfd[1].revents & POLLIN) {
-            if ((outlen = tls_read(c_tls, bufs, 1000)) <= 0) break;
-            printf("Mensagem (%lu): %s\n", outlen, bufs);
-        }
-    }
-
-
+//
+//
+//    char *msg = "Ciao client_socket";
+//    tls_write(c_tls, msg, strlen(msg));
+//
+//    struct pollfd pfd[2];
+//    pfd[0].fd = 0;
+//    pfd[0].events = POLLIN;
+//    pfd[1].fd = sc;
+//    pfd[1].events = POLLIN;
+//
 //    char bufs[255];
-//    tls_read(c_tls, bufs, sizeof bufs);
-//    printf("%s\n", bufs);
+//    ssize_t outlen = 0;
+//    while (bufs[0] != ':' && bufs[1] != 'q') {
+//        poll(pfd, 2, -1);
+//        bzero(bufs, 1000);
+//        bzero(bufs, 1000);
+//        if (pfd[0].revents & POLLIN) {
+//            int q = read(0, bufs, 1000);
+//            tls_write(c_tls, bufs, q);
+//        }
+//        if (pfd[1].revents & POLLIN) {
+//            if ((outlen = tls_read(c_tls, bufs, 1000)) <= 0) break;
+//            printf("Mensagem (%lu): %s\n", outlen, bufs);
+//        }
+//    }
 
-    //if(tls_accept_socket(s_tls, )<0)
-
-    //EVP_CIPHER_CTX *cipherCtx = EVP_CIPHER_CTX_new();
-    //AES_encrypt("fds", "dio", AES_KEY *key);
-
+    close(server_socket);
     tls_close(s_tls);
     tls_free(s_tls);
     tls_config_free(config);
     return 0;
 }
-
-//int socket_connect_server() {
-//    //inet il formato dell'indirizzo è nome internet
-//    //stream trasmette dati come un flusso
-//    int c_socket = socket(AF_INET, SOCK_STREAM, 0);
-//    if (c_socket != 0) {
-//        perror("socket");
-//        abort();
-//    }
-//
-//    struct sockaddr_in servaddr, cli;
-//    bzero(&servaddr, sizeof(servaddr));
-//
-//    //Assegnamento ip e porta
-//    servaddr.sin_family = AF_INET;
-//    servaddr.sin_addr.s_addr = inet_addr("127.0.0.1");//TODO sostituire con indirizzo pubblico
-//    servaddr.sin_port = htons(PORT);  //htons converte il valore per sin_port
-//
-//    if (connect(c_socket, (struct sockaddr *) &servaddr, sizeof(servaddr)) != 0) {
-//        perror("socket error\n");
-//        abort();
-//    }
-//    return c_socket;
-//}
-//
 
 void configure_tls(struct tls_config *config, struct tls *s_tls) {
     config = tls_config_new();
@@ -155,8 +128,9 @@ void configure_tls(struct tls_config *config, struct tls *s_tls) {
     }
 }
 
-void open_connection(struct sockaddr_in *server,
-                     int sock) {//TODO posso dichiarare sock all'interno se non serve successivamente
+int open_connection() {
+    struct sockaddr_in server;
+    int sock;
     int opt = 1;
     setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
     sock = socket(AF_INET, SOCK_STREAM, 0);
@@ -166,21 +140,21 @@ void open_connection(struct sockaddr_in *server,
     }
 
     bzero(&server, sizeof(server));
-    server->sin_family = AF_INET;
-    server->sin_port = htons(PORT);
-    server->sin_addr.s_addr = htonl(INADDR_ANY);    //inet_addr(hostAddress());
+    server.sin_family = AF_INET;
+    server.sin_port = htons(PORT);
+    server.sin_addr.s_addr = htonl(INADDR_ANY);    //inet_addr(hostAddress());
 
-    if (connect(sock, (struct sockaddr *) &server, sizeof(server)) != 0) {
-        close(sock);
-        perror("socket error\n");
-        abort();
+    if (bind(sock, (struct sockaddr *) &server, sizeof(server)) != 0) /* assiging the ip address and port*/
+    {
+        perror("can't bind port"); /* reporting error using errno.h library */
+        abort(); /*if error will be there then abort the process */
     }
-    //    if (bind(sock, (struct sockaddr *) &server, sizeof(server)) != 0) {
-//        perror("server bind error");
-//        abort();
-//    }
-//    if (listen(sock, 1) != 0) {
-//        perror("server listen error");
-//        abort();
-//    }
+
+    if (listen(sock, 1) != 0) /*for listening to max of 1 clients in the queue*/
+    {
+        perror("Can't configure listening port"); /* reporting error using errno.h library */
+        abort(); /*if erroor will be there then abort the process */
+    }
+
+    return sock;
 }
