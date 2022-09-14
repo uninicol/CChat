@@ -1,20 +1,24 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <arpa/inet.h>
+#include <netdb.h>
 #include "server.h"
 #include "client.h"
+#include "host-address.h"
 
 void printIP() {
     printf("IP pubblico:\t");
     FILE *ip = popen("curl -s https://api.ipify.org", "r");
-    char filename[100], c;
+    char c;
     c = fgetc(ip);
     while (c != EOF) {
         printf("%c", c);
         c = fgetc(ip);
     }
     fclose(ip);
-    printf("\n");
+    printf("\nHost address:\t%s\n", hostAddress());
+
 }
 
 int main(int argc, char *argv[]) {// definiamo come argomenti ip e porta (oppure lo facciamo automatico)
@@ -24,8 +28,6 @@ int main(int argc, char *argv[]) {// definiamo come argomenti ip e porta (oppure
 //        run_server();
 //    else
 //        run_client();
-    run_client();
+    run_server();
     return EXIT_SUCCESS;
 }
-
-
