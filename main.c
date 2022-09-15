@@ -27,7 +27,6 @@ int main(int argc, char *argv[]) {// definiamo come argomenti ip e porta (oppure
 //    if (pid == 0)
 //        run_server();
 //    else
-//        run_client();
-    run_server();
+    run_client("192.168.1.223", "6000");
     return EXIT_SUCCESS;
 }

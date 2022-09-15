@@ -23,7 +23,7 @@ void configure_tls(struct tls_config *config, struct tls *s_tls);
 
 int open_connection();
 
-int run_server() {
+int run_server(int port) {
     printf("Sono il server\n");
     struct tls *s_tls;
     struct tls *c_tls;
