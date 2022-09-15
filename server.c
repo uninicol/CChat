@@ -17,40 +17,40 @@
 #include <err.h>
 #include <errno.h>
 
-void configure_tls(struct tls_config *config, struct tls *s_tls);
+void configure_tls(struct tls_config *config, struct tls **s_tls);
 
 int open_connection(const char *port);
 
 int run_server(const char *port) {
     printf("Sono il server\n");
-    struct tls *s_tls;
-    struct tls *c_tls;
+    struct tls *s_tls = tls_server();
+    struct tls *c_tls = NULL;
     struct tls_config *config;
-    //struct sockaddr_in server, client_socket;
+    struct sockaddr_in server, client_addr;
 
     //vengono fatte tutte le configurazioni su s_tls
-    configure_tls(config, s_tls);
+    configure_tls(config, &s_tls);
+    //tls_config_free(config);  //Segmentation fault non so perchè
 
     int server_socket = open_connection(port);
 
     struct sockaddr_in server_addr; /*socket for server*/
-    socklen_t len = sizeof(server_addr);
+    socklen_t len = sizeof(client_addr);
 
     listen(server_socket, 1);
-    int client_socket = accept(server_socket, (struct sockaddr *) &server_addr, &len); /* accept connection as usual */
-    printf("Connection: %s:%dn", inet_ntoa(server_addr.sin_addr),
+    int client_socket = accept(server_socket, (struct sockaddr *) &client_addr, &len); /* accept connection as usual */
+    printf("Connection: %s:%d\n", inet_ntoa(server_addr.sin_addr),
            ntohs(server_addr.sin_port)); /*printing connected client information*/
 
 
-    if (tls_accept_socket(s_tls, &c_tls, client_socket) < 0) {
+    if (tls_accept_socket(s_tls, &c_tls, client_socket) != 0) {
         perror("server tls_accept_socket error\n");
         abort();
     }
 
-//
-//
-//    char *msg = "Ciao client_socket";
-//    tls_write(c_tls, msg, strlen(msg));
+    char *msg = "Ciao client";
+    tls_read(c_tls, msg, strlen(msg));
+
 //
 //    struct pollfd pfd[2];
 //    pfd[0].fd = 0;
@@ -77,11 +77,10 @@ int run_server(const char *port) {
     close(server_socket);
     tls_close(s_tls);
     tls_free(s_tls);
-    tls_config_free(config);
     return 0;
 }
 
-void configure_tls(struct tls_config *config, struct tls *s_tls) {
+void configure_tls(struct tls_config *config, struct tls **s_tls) {
     config = tls_config_new();
     if (config == NULL) {
         perror("tls_config_new error\n");
@@ -113,15 +112,14 @@ void configure_tls(struct tls_config *config, struct tls *s_tls) {
         abort();
     }
 
-    s_tls = tls_server(); //viene creata la connessione TLS (context)
     if (s_tls == NULL) {
         perror("server tls_server error\n");
         abort();
     }
 
-    if (tls_configure(s_tls, config) != 0) {
+    if (tls_configure(*s_tls, config) != 0) {
         printf("server tls_configure error: ");
-        perror(tls_error(s_tls));
+        perror(tls_error(*s_tls));
         abort();
     }
 }
