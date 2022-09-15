@@ -19,9 +19,6 @@ int run_client(const char *hostname, const char *port) {
     printf("Sono il client\n");
 
     int sock;
-    char bufc[BUFFER];
-    char bufs[BUFFER];
-    int bytes;
     //char *hostname, *portnum;
 
     pid_t cpid; /* fork variable*/
@@ -35,15 +32,15 @@ int run_client(const char *hostname, const char *port) {
     struct tls *c_tls = tls_client();
     struct tls_config *config = tls_config_new();
 
-    //tls_config_insecure_noverifycert(config);   //disabilitano parti di verifica del certificato
-    //tls_config_insecure_noverifyname(config);
+    tls_config_insecure_noverifycert(config);   //disabilitano parti di verifica del certificato
+    tls_config_insecure_noverifyname(config);
 
     uint32_t protocols = 0;
     tls_config_parse_protocols(&protocols, "secure");
     tls_config_set_protocols(config, protocols);
     tls_config_set_ciphers(config, "secure");
-    tls_config_set_key_file(config, "../Docs/mycert.pem");
-    tls_config_set_cert_file(config, "../Docs/mycert.pem");
+//    tls_config_set_key_file(config, "../Docs/mycert.pem");
+//    tls_config_set_cert_file(config, "../Docs/mycert.pem");
     if (tls_configure(c_tls, config) != 0) {
         perror("tls configure");
         tls_error(c_tls);
@@ -55,8 +52,11 @@ int run_client(const char *hostname, const char *port) {
         exit(EXIT_FAILURE);
     }
 
-    char *msg = "ciao server";
-    tls_write(c_tls, msg, strlen(msg));
+//    char *msg = "ciao server sono il client";
+//    tls_write(c_tls, msg, strlen(msg));
+//    char risposta[1000];
+//    ssize_t byte = tls_read(c_tls, risposta, sizeof(risposta));
+
 
 
     //INPUT chat
@@ -66,29 +66,49 @@ int run_client(const char *hostname, const char *port) {
 //        tls_write(c_tls, msg, sizeof(msg));
 //    }
 
-    struct pollfd pfd[2];
-    pfd[0].fd = 0;
-    pfd[0].events = POLLIN;
-    pfd[1].fd = sock;
-    pfd[1].events = POLLIN;
+//    struct pollfd pfd[2];
+//    pfd[0].fd = 0;
+//    pfd[0].events = POLLIN;
+//    pfd[1].fd = sock;
+//    pfd[1].events = POLLIN;
+//
+//    ssize_t outlen = 0;
+//    while (bufc[0] != ':' && bufc[1] != 'q') {
+//        bzero(bufs, BUFFER);
+//        bzero(bufc, BUFFER);
+//
+//        int a = poll(pfd, 2, -1);
+//
+//        if (pfd[0].revents & POLLIN) {
+//            ssize_t q = read(0, bufc, BUFFER);
+//            tls_write(c_tls, bufc, q);
+//        }
+//
+//        if (pfd[1].revents & POLLIN) {
+//            if ((outlen = tls_read(c_tls, bufs, BUFFER)) <= 0) break;
+//            printf("Mensagem (%lu): %s\n", outlen, bufs);
+//        }
+//    }
 
-    ssize_t outlen = 0;
-    while (bufc[0] != ':' && bufc[1] != 'q') {
-        bzero(bufs, BUFFER);
-        bzero(bufc, BUFFER);
+/*    char input[BUFFER];
+    bzero(input, BUFFER);
+    while (input[0] != ':' && input[1] != 'q') {
+        printf("\nMESSAGE  TO SERVER: ");
+        fgets(input, BUFFER, stdin);
+        tls_write(c_tls, input, strlen(input));//TODO da cambiare c_tls con quello del server?
+    }*/
 
-        poll(pfd, 2, -1);
+    char buf[BUFFER];
+    ssize_t byte;
 
-        if (pfd[0].revents & POLLIN) {
-            int q = read(0, bufc, BUFFER);
-            tls_write(c_tls, bufc, q);
-        }
-
-        if (pfd[1].revents & POLLIN) {
-            if ((outlen = tls_read(c_tls, bufs, BUFFER)) <= 0) break;
-            printf("Mensagem (%lu): %s\n", outlen, bufs);
+    while (buf[0] != ':' && buf[1] != 'q') {
+        byte = tls_read(c_tls, buf, sizeof(buf));
+        if (byte > 0) {
+            buf[byte] = 0;
+            printf("MESSAGE FROM SERVER:%s\n", buf);
         }
     }
+
 
     close(sock);
     tls_close(c_tls);
