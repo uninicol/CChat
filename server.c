@@ -17,13 +17,11 @@
 #include <err.h>
 #include <errno.h>
 
-#define PORT 4446
-
 void configure_tls(struct tls_config *config, struct tls *s_tls);
 
-int open_connection();
+int open_connection(const char *port);
 
-int run_server(int port) {
+int run_server(const char *port) {
     printf("Sono il server\n");
     struct tls *s_tls;
     struct tls *c_tls;
@@ -33,7 +31,7 @@ int run_server(int port) {
     //vengono fatte tutte le configurazioni su s_tls
     configure_tls(config, s_tls);
 
-    int server_socket = open_connection();
+    int server_socket = open_connection(port);
 
     struct sockaddr_in server_addr; /*socket for server*/
     socklen_t len = sizeof(server_addr);
@@ -128,7 +126,7 @@ void configure_tls(struct tls_config *config, struct tls *s_tls) {
     }
 }
 
-int open_connection() {
+int open_connection(const char *port) {
     struct sockaddr_in server;
     int sock;
     int opt = 1;
@@ -141,7 +139,7 @@ int open_connection() {
 
     bzero(&server, sizeof(server));
     server.sin_family = AF_INET;
-    server.sin_port = htons(PORT);
+    server.sin_port = htons(atoi(port));
     server.sin_addr.s_addr = htonl(INADDR_ANY);    //inet_addr(hostAddress());
 
     if (bind(sock, (struct sockaddr *) &server, sizeof(server)) != 0) /* assiging the ip address and port*/

@@ -5,7 +5,7 @@
 #ifndef CCHAT_SERVER_H
 #define CCHAT_SERVER_H
 
-int run_server(int port);
+int run_server(const char *port);
 
 #endif //CCHAT_SERVER_H
 
