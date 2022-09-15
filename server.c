@@ -23,12 +23,13 @@ void configure_tls(struct tls_config *config, struct tls **s_tls);
 
 int open_connection(const char *port);
 
+void tls_connection(int server_socket, struct tls *s_tls, struct tls **c_tls);
+
 int run_server(const char *port) {
     printf("Sono il server\n");
     struct tls *s_tls = tls_server();
     struct tls *c_tls = NULL;
     struct tls_config *config;
-    struct sockaddr_in server, client_addr;
 
     //vengono fatte tutte le configurazioni su s_tls
     configure_tls(config, &s_tls);
@@ -36,48 +37,81 @@ int run_server(const char *port) {
 
     int server_socket = open_connection(port);
 
-    struct sockaddr_in server_addr; /*socket for server*/
-    socklen_t len = sizeof(client_addr);
+    tls_connection(server_socket, s_tls, &c_tls);
 
-    listen(server_socket, 1);
-    int client_socket = accept(server_socket, (struct sockaddr *) &client_addr, &len); /* accept connection as usual */
-    printf("Connection: %s:%d\n", inet_ntoa(server_addr.sin_addr),
-           ntohs(server_addr.sin_port)); /*printing connected client information*/
+/*    char buf[1024];
+    ssize_t sd, bytes = 0;
+    char input[BUFFER];
 
+    while (buf[0] != ':' && buf[1] != 'q') {
+        bytes = tls_read(c_tls, buf, sizeof(buf)); *//* get request and read message from server*//*
+        if (bytes > 0) {
+            buf[bytes] = 0;
+            printf("nMESSAGE FROM SERVER:%s\n", buf);
+        }
+    }*/
 
-    if (tls_accept_socket(s_tls, &c_tls, client_socket) != 0) {
-        perror("server tls_accept_socket error\n");
-        abort();
+    char input[BUFFER];
+    bzero(input, BUFFER);
+    while (input[0] != ':' && input[1] != 'q') {
+        printf("\nMESSAGE TO SERVER: ");
+        fgets(input, BUFFER, stdin);
+        tls_write(s_tls, input, strlen(input));
     }
 
-    char *msg = "Ciao client";
-    tls_read(c_tls, msg, strlen(msg));
+//
+//
+//    char bufs[BUFFER], bufc[BUFFER];
+//    struct pollfd pfd[2];
 
-    char bufs[BUFFER], bufc[BUFFER];
-    struct pollfd pfd[2];
-    ssize_t outlen = 0;
-    pfd[0].fd = 0;
-    pfd[0].events = POLLIN;
-    pfd[1].fd = server_socket;
-    pfd[1].events = POLLIN;
+//    char *msg = "Ciao client sono il server";
+//    tls_write(c_tls, msg, strlen(msg));
+//    ssize_t byte = tls_read(c_tls, bufc, strlen(bufc));
 
-    while (bufc[0] != ':' && bufc[1] != 'q') {
+//
+//    ssize_t outlen = 0;
+//    pfd[0].fd = 0;
+//    pfd[0].events = POLLIN;
+//    pfd[1].fd = server_socket;
+//    pfd[1].events = POLLIN;
+//
+//    while (bufc[0] != ':' && bufc[1] != 'q') {
+//
+//        poll(pfd, 2, -1);
+//
+//        bzero(bufs, BUFFER);
+//        bzero(bufc, BUFFER);
+//
+//        if (pfd[0].revents & POLLIN) {
+//            int q = read(0, bufc, BUFFER);
+//            tls_write(c_tls, bufc, q);
+//        }
+//
+//        if (pfd[1].revents & POLLIN) {
+//            if ((outlen = tls_read(c_tls, bufs, BUFFER)) <= 0) break;
+//            printf("Mensagem (%lu): %s\n", outlen, bufs);
+//        }
+//    }
 
-        poll(pfd, 2, -1);
 
-        bzero(bufs, BUFFER);
-        bzero(bufc, BUFFER);
-
-        if (pfd[0].revents & POLLIN) {
-            int q = read(0, bufc, BUFFER);
-            tls_write(c_tls, bufc, q);
-        }
-
-        if (pfd[1].revents & POLLIN) {
-            if ((outlen = tls_read(c_tls, bufs, BUFFER)) <= 0) break;
-            printf("Mensagem (%lu): %s\n", outlen, bufs);
-        }
-    }
+//    int bytes;
+//    if (cpid == 0) {
+//        while (1) {
+//            bytes = tls_read(c_tls, bufc, sizeof(bufc)); /* get request and read message from server*/
+//            if (bytes > 0) {
+//                bufc[bytes] = 0;
+//                printf("nMESSAGE FROM SERVER:%sn", buf);
+//            } else
+//                ERR_print_errors_fp(stderr);
+//        }
+//    } else {
+//        while (1) {
+//            printf("nMESSAGE TO CLIENT:");
+//            fgets(input, BUFFER, stdin); /* get request and reply to client*/
+//            SSL_write(ssl, input, strlen(input));
+//        }
+//    }
+//}
 
     close(server_socket);
     tls_close(s_tls);
@@ -158,4 +192,20 @@ int open_connection(const char *port) {
     }
 
     return sock;
+}
+
+void tls_connection(int server_socket, struct tls *s_tls, struct tls **c_tls) {
+    struct sockaddr_in client_addr;
+    struct sockaddr_in server_addr; /*socket for server*/
+    socklen_t len = sizeof(client_addr);
+
+    listen(server_socket, 1);
+    int client_socket = accept(server_socket, (struct sockaddr *) &client_addr, &len); /* accept connection as usual */
+    printf("Connection: %s:%d\n", inet_ntoa(server_addr.sin_addr),
+           ntohs(server_addr.sin_port)); /*printing connected client information*/
+
+    if (tls_accept_socket(s_tls, c_tls, client_socket) != 0) {
+        perror("server tls_accept_socket error\n");
+        abort();
+    }
 }
