@@ -17,6 +17,8 @@
 #include <err.h>
 #include <errno.h>
 
+#define BUFFER 1024
+
 void configure_tls(struct tls_config *config, struct tls **s_tls);
 
 int open_connection(const char *port);
@@ -51,28 +53,31 @@ int run_server(const char *port) {
     char *msg = "Ciao client";
     tls_read(c_tls, msg, strlen(msg));
 
-//
-//    struct pollfd pfd[2];
-//    pfd[0].fd = 0;
-//    pfd[0].events = POLLIN;
-//    pfd[1].fd = sc;
-//    pfd[1].events = POLLIN;
-//
-//    char bufs[255];
-//    ssize_t outlen = 0;
-//    while (bufs[0] != ':' && bufs[1] != 'q') {
-//        poll(pfd, 2, -1);
-//        bzero(bufs, 1000);
-//        bzero(bufs, 1000);
-//        if (pfd[0].revents & POLLIN) {
-//            int q = read(0, bufs, 1000);
-//            tls_write(c_tls, bufs, q);
-//        }
-//        if (pfd[1].revents & POLLIN) {
-//            if ((outlen = tls_read(c_tls, bufs, 1000)) <= 0) break;
-//            printf("Mensagem (%lu): %s\n", outlen, bufs);
-//        }
-//    }
+    char bufs[BUFFER], bufc[BUFFER];
+    struct pollfd pfd[2];
+    ssize_t outlen = 0;
+    pfd[0].fd = 0;
+    pfd[0].events = POLLIN;
+    pfd[1].fd = server_socket;
+    pfd[1].events = POLLIN;
+
+    while (bufc[0] != ':' && bufc[1] != 'q') {
+
+        poll(pfd, 2, -1);
+
+        bzero(bufs, BUFFER);
+        bzero(bufc, BUFFER);
+
+        if (pfd[0].revents & POLLIN) {
+            int q = read(0, bufc, BUFFER);
+            tls_write(c_tls, bufc, q);
+        }
+
+        if (pfd[1].revents & POLLIN) {
+            if ((outlen = tls_read(c_tls, bufs, BUFFER)) <= 0) break;
+            printf("Mensagem (%lu): %s\n", outlen, bufs);
+        }
+    }
 
     close(server_socket);
     tls_close(s_tls);

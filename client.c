@@ -7,6 +7,8 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <unistd.h>
+#include <sys/poll.h>
+#include <poll.h>
 #include "host-address.h"
 
 #define BUFFER 1024 /*buffer for reading messages*/
@@ -17,8 +19,8 @@ int run_client(const char *hostname, const char *port) {
     printf("Sono il client\n");
 
     int sock;
-    char buf[BUFFER];
-    char input[BUFFER];
+    char bufc[BUFFER];
+    char bufs[BUFFER];
     int bytes;
     //char *hostname, *portnum;
 
@@ -63,6 +65,30 @@ int run_client(const char *hostname, const char *port) {
 //        fgets(msg, sizeof(msg), stdin);
 //        tls_write(c_tls, msg, sizeof(msg));
 //    }
+
+    struct pollfd pfd[2];
+    pfd[0].fd = 0;
+    pfd[0].events = POLLIN;
+    pfd[1].fd = sock;
+    pfd[1].events = POLLIN;
+
+    ssize_t outlen = 0;
+    while (bufc[0] != ':' && bufc[1] != 'q') {
+        bzero(bufs, BUFFER);
+        bzero(bufc, BUFFER);
+
+        poll(pfd, 2, -1);
+
+        if (pfd[0].revents & POLLIN) {
+            int q = read(0, bufc, BUFFER);
+            tls_write(c_tls, bufc, q);
+        }
+
+        if (pfd[1].revents & POLLIN) {
+            if ((outlen = tls_read(c_tls, bufs, BUFFER)) <= 0) break;
+            printf("Mensagem (%lu): %s\n", outlen, bufs);
+        }
+    }
 
     close(sock);
     tls_close(c_tls);
