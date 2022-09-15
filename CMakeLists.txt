@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.23)
+cmake_minimum_required(VERSION 3.22)
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/CMake;${CMAKE_MODULE_PATH}")
 project(CmakeCCHAT C)
 add_executable(CmakeCCHAT main.c client.c client.h server.c server.h host-address.c host-address.h)
