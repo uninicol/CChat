@@ -1,7 +1,3 @@
-//
-// Created by nicki on 30/06/2022.
-//
-
 #include "server.h"
 #include "host-address.h"
 #include <stdio.h>
@@ -23,59 +19,36 @@ void configure_tls(struct tls_config *config, struct tls **s_tls);
 
 int open_connection(const char *port);
 
+int establish_connection(int server_socket);
+
 int run_server(const char *port) {
     printf("Sono il server\n");
     struct tls *s_tls = tls_server();
     struct tls *c_tls = NULL;
     struct tls_config *config;
-    struct sockaddr_in server, client_addr;
+
 
     //vengono fatte tutte le configurazioni su s_tls
     configure_tls(config, &s_tls);
     //tls_config_free(config);  //Segmentation fault non so perchè
 
     int server_socket = open_connection(port);
-
-    struct sockaddr_in server_addr; /*socket for server*/
-    socklen_t len = sizeof(client_addr);
-
-    listen(server_socket, 1);
-    int client_socket = accept(server_socket, (struct sockaddr *) &client_addr, &len); /* accept connection as usual */
-    printf("Connection: %s:%d\n", inet_ntoa(server_addr.sin_addr),
-           ntohs(server_addr.sin_port)); /*printing connected client information*/
-
+    int client_socket = establish_connection(server_socket);
 
     if (tls_accept_socket(s_tls, &c_tls, client_socket) != 0) {
         perror("server tls_accept_socket error\n");
         abort();
     }
 
-    char *msg = "Ciao client";
-    tls_read(c_tls, msg, strlen(msg));
 
-    char bufs[BUFFER], bufc[BUFFER];
-    struct pollfd pfd[2];
-    ssize_t outlen = 0;
-    pfd[0].fd = 0;
-    pfd[0].events = POLLIN;
-    pfd[1].fd = server_socket;
-    pfd[1].events = POLLIN;
-
-    while (bufc[0] != ':' && bufc[1] != 'q') {
-
-        poll(pfd, 2, -1);
-
-        bzero(bufs, BUFFER);
-        bzero(bufc, BUFFER);
-
-        if (pfd[0].revents & POLLIN) {
-            int q = read(0, bufc, BUFFER);
-            tls_write(c_tls, bufc, q);
-        }
-
-        if (pfd[1].revents & POLLIN) {
-            if ((outlen = tls_read(c_tls, bufs, BUFFER)) <= 0) break;
-            printf("Mensagem (%lu): %s\n", outlen, bufs);
+    char buf[BUFFER];
+    ssize_t bytes;
+    while (1) {
+        bytes = tls_read(c_tls, buf, sizeof(buf)); /* get request and read message from server*/
+        if (buf[0] == ':' && buf[1] == 'q') break;
+        if (bytes > 0) {
+            buf[bytes] = 0;
+            printf("MESSAGE FROM SERVER: %sn", buf);
         }
     }
 
@@ -130,7 +103,7 @@ void configure_tls(struct tls_config *config, struct tls **s_tls) {
 }
 
 int open_connection(const char *port) {
-    struct sockaddr_in server;
+    struct sockaddr_in server_addr;
     int sock;
     int opt = 1;
     setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
@@ -140,22 +113,31 @@ int open_connection(const char *port) {
         abort();
     }
 
-    bzero(&server, sizeof(server));
-    server.sin_family = AF_INET;
-    server.sin_port = htons(atoi(port));
-    server.sin_addr.s_addr = htonl(INADDR_ANY);    //inet_addr(hostAddress());
+    bzero(&server_addr, sizeof(server_addr));
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_port = htons(atoi(port));
+    server_addr.sin_addr.s_addr = INADDR_ANY;
 
-    if (bind(sock, (struct sockaddr *) &server, sizeof(server)) != 0) /* assiging the ip address and port*/
-    {
-        perror("can't bind port"); /* reporting error using errno.h library */
-        abort(); /*if error will be there then abort the process */
+    //assegno l'indirizzo ip e la porta
+    if (bind(sock, (struct sockaddr *) &server_addr, sizeof(server_addr)) != 0) {
+        perror("errore bind");
+        abort();
     }
 
-    if (listen(sock, 1) != 0) /*for listening to max of 1 clients in the queue*/
-    {
-        perror("Can't configure listening port"); /* reporting error using errno.h library */
-        abort(); /*if erroor will be there then abort the process */
+    //ascolto un solo client
+    if (listen(sock, 1) != 0) {
+        perror("Can't configure listening port");
+        abort();
     }
-
     return sock;
+}
+
+int establish_connection(int server_socket) {
+    struct sockaddr_in server_addr;
+    socklen_t len = sizeof(server_addr);
+
+    listen(server_socket, 5);
+    int client_socket = accept(server_socket, (struct sockaddr *) &server_addr, &len); //accetta la connessione
+    printf("Connection: %s:%d\n", inet_ntoa(server_addr.sin_addr), ntohs(server_addr.sin_port));
+    return client_socket;
 }
