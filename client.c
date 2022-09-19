@@ -11,23 +11,16 @@
 #include <poll.h>
 #include "host-address.h"
 
-#define BUFFER 1024 /*buffer for reading messages*/
+#define BUFFER 1024 //dimensione del buffer
 
 int open_connection_client(const char *hostname, const char *port);
 
 int run_client(const char *hostname, const char *port) {
     printf("Sono il client\n");
 
-    int sock;
-    //char *hostname, *portnum;
+    int server_socket;
 
-    pid_t cpid; /* fork variable*/
-
-//    hostname = strings[1];
-//
-//    portnum = strings[2];
-
-    sock = open_connection_client(hostname, port); /*converting ascii port to interger */
+    server_socket = open_connection_client(hostname, port);
 
     struct tls *c_tls = tls_client();
     struct tls_config *config = tls_config_new();
@@ -41,76 +34,27 @@ int run_client(const char *hostname, const char *port) {
     tls_config_set_ciphers(config, "secure");
 //    tls_config_set_key_file(config, "../Docs/mycert.pem");
 //    tls_config_set_cert_file(config, "../Docs/mycert.pem");
+
     if (tls_configure(c_tls, config) != 0) {
         perror("tls configure");
         tls_error(c_tls);
         exit(EXIT_FAILURE);
     }
 
-    if (tls_connect_socket(c_tls, sock, hostname) != 0) {//crea un nuovo socket
+    if (tls_connect_socket(c_tls, server_socket, hostname) != 0) {//crea un nuovo socket
         perror("connect failed");
         exit(EXIT_FAILURE);
     }
 
-//    char *msg = "ciao server sono il client";
-//    tls_write(c_tls, msg, strlen(msg));
-//    char risposta[1000];
-//    ssize_t byte = tls_read(c_tls, risposta, sizeof(risposta));
-
-
-
-    //INPUT chat
-//    char msg[255];
-//    while (!strcmp(msg, "/EXIT")) {// la chat viene chiusa con il comando /EXIT
-//        fgets(msg, sizeof(msg), stdin);
-//        tls_write(c_tls, msg, sizeof(msg));
-//    }
-
-//    struct pollfd pfd[2];
-//    pfd[0].fd = 0;
-//    pfd[0].events = POLLIN;
-//    pfd[1].fd = sock;
-//    pfd[1].events = POLLIN;
-//
-//    ssize_t outlen = 0;
-//    while (bufc[0] != ':' && bufc[1] != 'q') {
-//        bzero(bufs, BUFFER);
-//        bzero(bufc, BUFFER);
-//
-//        int a = poll(pfd, 2, -1);
-//
-//        if (pfd[0].revents & POLLIN) {
-//            ssize_t q = read(0, bufc, BUFFER);
-//            tls_write(c_tls, bufc, q);
-//        }
-//
-//        if (pfd[1].revents & POLLIN) {
-//            if ((outlen = tls_read(c_tls, bufs, BUFFER)) <= 0) break;
-//            printf("Mensagem (%lu): %s\n", outlen, bufs);
-//        }
-//    }
-
-/*    char input[BUFFER];
-    bzero(input, BUFFER);
-    while (input[0] != ':' && input[1] != 'q') {
-        printf("\nMESSAGE  TO SERVER: ");
-        fgets(input, BUFFER, stdin);
-        tls_write(c_tls, input, strlen(input));//TODO da cambiare c_tls con quello del server?
-    }*/
-
     char buf[BUFFER];
-    ssize_t byte;
-
+    bzero(buf, BUFFER);
     while (buf[0] != ':' && buf[1] != 'q') {
-        byte = tls_read(c_tls, buf, sizeof(buf));
-        if (byte > 0) {
-            buf[byte] = 0;
-            printf("MESSAGE FROM SERVER:%s\n", buf);
-        }
+        printf("MESSAGE TO SERVER:");
+        fgets(buf, BUFFER, stdin);
+        tls_write(c_tls, buf, strlen(buf)); // cifra e scrive il messaggio
     }
 
-
-    close(sock);
+    close(server_socket);
     tls_close(c_tls);
     tls_free(c_tls);
     tls_config_free(config);
@@ -120,21 +64,23 @@ int run_client(const char *hostname, const char *port) {
 int open_connection_client(const char *hostname, const char *port) {
     int sock;
     struct hostent *host;
-    struct sockaddr_in addr; /*creating the sockets*/
+    struct sockaddr_in client_addr;
     if ((host = gethostbyname(hostname)) == NULL) {
         perror(hostname);
         abort();
     }
 
-    sock = socket(AF_INET, SOCK_STREAM, 0); /* setting the connection as tcp it creates endpoint for connection */
-    bzero(&addr, sizeof(addr));
-    addr.sin_family = AF_INET;
-    addr.sin_port = htons(atoi(port));
-    addr.sin_addr.s_addr = *(long *) (host->h_addr);
+    sock = socket(PF_INET, SOCK_STREAM, 0); // imposto la connessione
+    bzero(&client_addr, sizeof(client_addr));
+    client_addr.sin_family = AF_INET;
+    client_addr.sin_port = htons(atoi(port));
+    client_addr.sin_addr.s_addr = *(long *) (host->h_addr);
 
-    if (connect(sock, (struct sockaddr *) &addr, sizeof(addr)) != 0) {/*initiate a connection on a socket*/
+    //inizializza la connessione
+    if (connect(sock, (struct sockaddr *) &client_addr, sizeof(client_addr)) != 0) {
         close(sock);
         perror(hostname);
         abort();
     }
+    return sock;
 }
