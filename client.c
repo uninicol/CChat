@@ -4,19 +4,15 @@
 #include <string.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <arpa/inet.h>
 #include <netdb.h>
 #include <unistd.h>
-#include <sys/poll.h>
-#include <poll.h>
-#include "host-address.h"
 
 #define BUFFER 1024 //dimensione del buffer
 
 int open_connection_client(const char *hostname, int port);
 
 int run_client(const char *hostname, int port) {
-    printf("Sono il client\n");
+    //printf("Sono il client\n");
 
     int server_socket;
 

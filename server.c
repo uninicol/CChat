@@ -1,5 +1,4 @@
 #include "server.h"
-#include "host-address.h"
 #include <stdio.h>
 #include <tls.h>
 #include <openssl/aes.h>
@@ -8,10 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <arpa/inet.h>
-#include <sys/poll.h>
 #include <unistd.h>
-#include <err.h>
-#include <errno.h>
 
 #define BUFFER 1024
 
@@ -22,7 +18,7 @@ int open_connection(int port);
 int establish_connection(int server_socket);
 
 int run_server(int port) {
-    printf("Sono il server\n");
+    //printf("Sono il server\n");
     struct tls *s_tls = tls_server();
     struct tls *c_tls = NULL;
     struct tls_config *config;
