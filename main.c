@@ -9,10 +9,23 @@
 
 int main(int argc, char *argv[]) {// definiamo come argomenti ip e porta (oppure lo facciamo automatico)
     printf("\nHost address:\t%s\n", hostAddress());
-    //    pid_t pid = fork();
-//    if (pid == 0)
-//        run_server();
-//    else
-    run_client("192.168.1.223", "6001");
+
+    char *ip;
+    int local_port;
+    int port;
+
+    printf("Inserire ip server:\t");
+    fgets(ip, 15, stdin);
+    printf("Inserire porta del server:\t");
+    scanf("%d", &port);
+    printf("Inserire porta del server locale:\t");
+    scanf("%d", &local_port);
+
+
+    pid_t pid = fork();
+    if (pid == 0)
+        run_server(local_port);
+    else
+        run_client(ip, port);
     return EXIT_SUCCESS;
 }

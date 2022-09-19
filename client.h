@@ -5,6 +5,6 @@
 #ifndef CCHAT_CLIENT_H
 #define CCHAT_CLIENT_H
 
-int run_client(const char *hostname, const char *port);
+int run_client(const char *hostname, int port);
 
 #endif //CCHAT_CLIENT_H

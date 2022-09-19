@@ -13,9 +13,9 @@
 
 #define BUFFER 1024 //dimensione del buffer
 
-int open_connection_client(const char *hostname, const char *port);
+int open_connection_client(const char *hostname, int port);
 
-int run_client(const char *hostname, const char *port) {
+int run_client(const char *hostname, int port) {
     printf("Sono il client\n");
 
     int server_socket;
@@ -61,7 +61,7 @@ int run_client(const char *hostname, const char *port) {
     return EXIT_SUCCESS;
 }
 
-int open_connection_client(const char *hostname, const char *port) {
+int open_connection_client(const char *hostname, int port) {
     int sock;
     struct hostent *host;
     struct sockaddr_in client_addr;
@@ -73,7 +73,7 @@ int open_connection_client(const char *hostname, const char *port) {
     sock = socket(PF_INET, SOCK_STREAM, 0); // imposto la connessione
     bzero(&client_addr, sizeof(client_addr));
     client_addr.sin_family = AF_INET;
-    client_addr.sin_port = htons(atoi(port));
+    client_addr.sin_port = htons(port);
     client_addr.sin_addr.s_addr = *(long *) (host->h_addr);
 
     //inizializza la connessione
