@@ -15,12 +15,12 @@ int main(int argc, char *argv[]) {// definiamo come argomenti ip e porta (oppure
     if (pid == 0)
         run_server(local_port);
     else {
-        char *ip;
+        char *ip=(char *) malloc(15);
         int port;
 
-        printf("Inserire ip server:\t");
+        printf("Inserire ip server host:\t");
         scanf("%s", ip);
-        printf("Inserire porta del server:\t");
+        printf("Inserire porta del server host:\t");
         scanf("%d", &port);
         run_client(ip, port);
     }
