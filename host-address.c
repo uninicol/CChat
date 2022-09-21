@@ -39,7 +39,8 @@ char *hostAddress() {
     host_entry = gethostbyname(host); //find host information
     check_host_entry(host_entry);
     IP = inet_ntoa(*((struct in_addr *) host_entry->h_addr_list[0]));
+    return IP;
     //Convert into IP string
-    printf("Current Host Name: %s\n", host);
-    printf("Host IP: %s\n", IP);
+//    printf("Current Host Name: %s\n", host);
+//    printf("Host IP: %s\n", IP);
 }
