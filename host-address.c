@@ -1,56 +1,45 @@
-//
-// Created by nicol on 9/12/22.
-//
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <errno.h>
 #include <netdb.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
 #include <arpa/inet.h>
-#include "host-address.h"
 
-void checkHostName(int hostname) {
+void check_host_name(int hostname) { //This function returns host name for    local computer
     if (hostname == -1) {
         perror("gethostname");
         exit(1);
     }
 }
 
-// Returns host information corresponding to host name
-void checkHostEntry(struct hostent *hostentry) {
+void check_host_entry(struct hostent *hostentry) { //find host info from   host name
     if (hostentry == NULL) {
         perror("gethostbyname");
         exit(1);
     }
 }
 
-// Converts space-delimited IPv4 addresses
-// to dotted-decimal format
-void checkIPbuffer(char *IPbuffer) {
-    if (IPbuffer == NULL) {
+void IP_formatter(char *IPbuffer) { //convert IP string to dotted decimal    format
+    if (NULL == IPbuffer) {
         perror("inet_ntoa");
         exit(1);
     }
 }
 
 char *hostAddress() {
-    char hostbuffer[256];
-    char *IPbuffer;
+    char host[256];
+    char *IP;
     struct hostent *host_entry;
     int hostname;
-
-    // To retrieve hostname
-    hostname = gethostname(hostbuffer, sizeof(hostbuffer));
-    checkHostName(hostname);
-
-    // To retrieve host information
-    host_entry = gethostbyname(hostbuffer);
-    checkHostEntry(host_entry);
-
-    // To convert an Internet network
-    // address into ASCII string
-    IPbuffer = inet_ntoa(*((struct in_addr *)
-            host_entry->h_addr_list[0]));
-
-    //printf("Host IP: %s\n", IPbuffer);
+    hostname = gethostname(host, sizeof(host)); //find the host name
+    check_host_name(hostname);
+    host_entry = gethostbyname(host); //find host information
+    check_host_entry(host_entry);
+    IP = inet_ntoa(*((struct in_addr *) host_entry->h_addr_list[0]));
+    //Convert into IP string
+    printf("Current Host Name: %s\n", host);
+    printf("Host IP: %s\n", IP);
 }
