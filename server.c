@@ -1,4 +1,5 @@
 #include "server.h"
+#include "chat.h"
 #include <stdio.h>
 #include <tls.h>
 #include <openssl/aes.h>
@@ -18,7 +19,7 @@ int open_connection(int port);
 int establish_connection(int server_socket);
 
 int run_server(int port) {
-    //printf("Sono il server\n");
+    printf("Sono il server porta: %d\n", port);
     struct tls *s_tls = tls_server();
     struct tls *c_tls = NULL;
     struct tls_config *config;
@@ -36,17 +37,11 @@ int run_server(int port) {
         abort();
     }
 
-
-    char buf[BUFFER];
-    ssize_t bytes;
-    while (1) {
-        bytes = tls_read(c_tls, buf, sizeof(buf)); /* get request and read message from server*/
-        if (buf[0] == ':' && buf[1] == 'q') break;
-        if (bytes > 0) {
-            buf[bytes] = 0;
-            printf("MESSAGE FROM SERVER: %sn", buf);
-        }
-    }
+    pid_t pid = fork();
+    if (pid == 0)
+        write_chat(c_tls);
+    else
+        read_chat(c_tls);
 
     close(server_socket);
     tls_close(s_tls);
@@ -69,7 +64,7 @@ void configure_tls(struct tls_config *config, struct tls **s_tls) {
 
     tls_config_set_protocols(config, protocols);
 
-    char *ciphers = "ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-SHA384:ECDHE-ECDSA-AES256-SHA384";
+    char *ciphers = "AES256";
     if (tls_config_set_ciphers(config, ciphers) != 0) {
         perror("server tls_config_set_ciphers error\n");
         abort();
@@ -108,11 +103,10 @@ int open_connection(int port) {
         perror("socket");
         abort();
     }
-
     bzero(&server_addr, sizeof(server_addr));
     server_addr.sin_family = AF_INET;
     server_addr.sin_port = htons(port);
-    server_addr.sin_addr.s_addr = INADDR_ANY;
+    server_addr.sin_addr.s_addr = htonl(INADDR_ANY); //INADDR_ANY;
 
     //assegno l'indirizzo ip e la porta
     if (bind(sock, (struct sockaddr *) &server_addr, sizeof(server_addr)) != 0) {

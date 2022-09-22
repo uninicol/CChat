@@ -6,6 +6,7 @@
 #include <netinet/in.h>
 #include <netdb.h>
 #include <unistd.h>
+#include "chat.h"
 
 #define BUFFER 1024 //dimensione del buffer
 
@@ -42,13 +43,19 @@ int run_client(const char *hostname, int port) {
         exit(EXIT_FAILURE);
     }
 
-    char buf[BUFFER];
-    bzero(buf, BUFFER);
-    while (buf[0] != ':' && buf[1] != 'q') {
-        printf("MESSAGE TO SERVER:");
-        fgets(buf, BUFFER, stdin);
-        tls_write(c_tls, buf, strlen(buf)); // cifra e scrive il messaggio
-    }
+
+    pid_t pid = fork();
+    if (pid == 0)
+        write_chat(c_tls);
+    else
+        read_chat(c_tls);
+//    char buf[BUFFER];
+//    bzero(buf, BUFFER);
+//    while (buf[0] != ':' && buf[1] != 'q') {
+//        printf("MESSAGE TO SERVER:");
+//        fgets(buf, BUFFER, stdin);
+//        tls_write(c_tls, buf, strlen(buf)); // cifra e scrive il messaggio
+//    }
 
     close(server_socket);
     tls_close(c_tls);
@@ -59,21 +66,22 @@ int run_client(const char *hostname, int port) {
 
 int open_connection_client(const char *hostname, int port) {
     int sock;
-    struct hostent *host;
-    struct sockaddr_in client_addr;
-    if ((host = gethostbyname(hostname)) == NULL) {
-        perror(hostname);
-        abort();
-    }
+//    struct hostent *host;
+    struct sockaddr_in server_addr;
+//    if ((host = gethostbyname(hostname)) == NULL) {
+//        perror(hostname);
+//        abort();
+//    }
 
+    //PF_INET= inposto il formato dell'indirizzo (ipv4) SOCK_STREAM trasmette i dati come un flusso
     sock = socket(PF_INET, SOCK_STREAM, 0); // imposto la connessione
-    bzero(&client_addr, sizeof(client_addr));
-    client_addr.sin_family = AF_INET;
-    client_addr.sin_port = htons(port);
-    client_addr.sin_addr.s_addr = *(long *) (host->h_addr);
+    bzero(&server_addr, sizeof(server_addr));
+    server_addr.sin_family = AF_INET;   //identifica il formato dell'indirizzo
+    server_addr.sin_port = htons(port); //numero di porta
+    server_addr.sin_addr.s_addr = htonl(INADDR_ANY);//*(long *) (host->h_addr); //contiene l'indirizzoIPv4
 
-    //inizializza la connessione
-    if (connect(sock, (struct sockaddr *) &client_addr, sizeof(client_addr)) != 0) {
+    //apre la connessione
+    if (connect(sock, (struct sockaddr *) &server_addr, sizeof(server_addr)) != 0) {
         close(sock);
         perror(hostname);
         abort();
