@@ -6,6 +6,7 @@
 #include <netinet/in.h>
 #include <netdb.h>
 #include <unistd.h>
+#include <pthread.h>
 #include "chat.h"
 
 #define BUFFER 1024 //dimensione del buffer
@@ -43,19 +44,22 @@ int run_client(const char *hostname, int port) {
         exit(EXIT_FAILURE);
     }
 
+    //read_chat(c_tls);
+    //write_chat(c_tls);
+//    pid_t pid = fork();
+//    if (pid == 0)
+//        write_chat(c_tls);
+//    else
+//        read_chat(c_tls);
+//    kill(0, SIGKILL);
 
-    pid_t pid = fork();
-    if (pid == 0)
-        write_chat(c_tls);
-    else
-        read_chat(c_tls);
-//    char buf[BUFFER];
-//    bzero(buf, BUFFER);
-//    while (buf[0] != ':' && buf[1] != 'q') {
-//        printf("MESSAGE TO SERVER:");
-//        fgets(buf, BUFFER, stdin);
-//        tls_write(c_tls, buf, strlen(buf)); // cifra e scrive il messaggio
-//    }
+    pthread_t read_thread, write_thread;
+    printf("Before client Thread\n");
+    pthread_create(&read_thread, NULL, (void *(*)(void *)) read_chat, c_tls);
+    pthread_create(&write_thread, NULL, (void *(*)(void *)) write_chat, c_tls);
+    pthread_join(read_thread, NULL);
+    pthread_join(write_thread, NULL);
+    printf("After client Thread\n");
 
     close(server_socket);
     tls_close(c_tls);
