@@ -9,8 +9,6 @@
 #include <string.h>
 #include <arpa/inet.h>
 #include <unistd.h>
-#include <signal.h>
-#include <pthread.h>
 
 #define BUFFER 1024
 
@@ -39,28 +37,7 @@ int run_server(int port) {
         abort();
     }
 
-    //write_chat(c_tls);
-    //read_chat(c_tls);
-//    pid_t pid = fork();
-//    if (pid == 0) {
-//        printf("server leggo\n");
-//        read_chat(c_tls);
-//        printf("server non leggo\n");
-//    } else {
-//        printf("server scrivo\n");
-//        write_chat(c_tls);
-//        printf("server non scrivo\n");
-//    }
-//    kill(0, SIGKILL);
-
-    //TODO multithread o multiprocesso non funziona ma con solo read_chat va bene
-    pthread_t read_thread, write_thread;
-    printf("Before server Thread\n");
-    pthread_create(&read_thread, NULL, (void *(*)(void *)) read_chat, c_tls);
-    pthread_create(&write_thread, NULL, (void *(*)(void *)) write_chat, c_tls);
-    pthread_join(read_thread, NULL);
-    pthread_join(write_thread, NULL);
-    printf("After server Thread\n");
+    start_chat(c_tls);
 
     close(server_socket);
     close(client_socket);

@@ -44,22 +44,7 @@ int run_client(const char *hostname, int port) {
         exit(EXIT_FAILURE);
     }
 
-    //read_chat(c_tls);
-    //write_chat(c_tls);
-//    pid_t pid = fork();
-//    if (pid == 0)
-//        write_chat(c_tls);
-//    else
-//        read_chat(c_tls);
-//    kill(0, SIGKILL);
-
-    pthread_t read_thread, write_thread;
-    printf("Before client Thread\n");
-    pthread_create(&read_thread, NULL, (void *(*)(void *)) read_chat, c_tls);
-    pthread_create(&write_thread, NULL, (void *(*)(void *)) write_chat, c_tls);
-    pthread_join(read_thread, NULL);
-    pthread_join(write_thread, NULL);
-    printf("After client Thread\n");
+    start_chat(c_tls);
 
     close(server_socket);
     tls_close(c_tls);
@@ -70,12 +55,7 @@ int run_client(const char *hostname, int port) {
 
 int open_connection_client(const char *hostname, int port) {
     int sock;
-//    struct hostent *host;
     struct sockaddr_in server_addr;
-//    if ((host = gethostbyname(hostname)) == NULL) {
-//        perror(hostname);
-//        abort();
-//    }
 
     //PF_INET= inposto il formato dell'indirizzo (ipv4) SOCK_STREAM trasmette i dati come un flusso
     sock = socket(PF_INET, SOCK_STREAM, 0); // imposto la connessione
