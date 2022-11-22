@@ -15,6 +15,7 @@ int open_connection_client(const char *hostname, int port);
 
 int run_client(const char *hostname, int port) {
     //printf("Sono il client\n");
+    //TODO se il client non trova il server attenda per un po'
 
     int server_socket;
 
@@ -39,7 +40,7 @@ int run_client(const char *hostname, int port) {
         exit(EXIT_FAILURE);
     }
 
-    if (tls_connect_socket(c_tls, server_socket, hostname) != 0) {//crea un nuovo socket
+    if (tls_connect_socket(c_tls, server_socket, hostname) != 0) {
         perror("connect failed");
         exit(EXIT_FAILURE);
     }

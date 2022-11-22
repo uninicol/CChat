@@ -12,7 +12,7 @@
 
 #define BUFFER 1024
 
-volatile bool closed = 0;
+volatile bool closed = false;
 
 void start_chat(struct tls *c_tls) {
     pthread_t read_thread, write_thread;
@@ -39,14 +39,14 @@ void read_chat(struct tls *c_tls) {
     while (!closed) {
         bzero(buf, strlen(buf));
         bytes = tls_read(c_tls, buf, sizeof(buf));
-        if (bytes > 0) {
-            if (buf[0] == ':' && buf[1] == 'q') {
-                printf("Chat terminata");//non stampa al ricevente(?)
-                tls_write(c_tls, ":q", 2);//chiudo il lettore dell'altro
-                closed = 1;
-                break;
-            }
-            printf("Server: %s", buf);
+        if (bytes == 1 && buf[0]=='\n') //evita di avere un messaggio vuoto
+            continue;
+        if (buf[0] == ':' && buf[1] == 'q') {
+            printf("Chat terminata\n");
+            tls_write(c_tls, ":q", 2);//chiudo il lettore dell'altro
+            closed = true;
+            break;
         }
+        printf("Server: %s", buf);
     }
 }
