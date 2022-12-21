@@ -15,12 +15,9 @@
 int open_connection_client(const char *hostname, int port);
 
 int run_client(const char *hostname, int port) {
-    //printf("Sono il client\n");
-    //TODO se il client non trova il server attenda per un po'
+    int serversock;
 
-    int server_socket;
-
-    server_socket = open_connection_client(hostname, port);
+    serversock = open_connection_client(hostname, port);
 
     struct tls *c_tls = tls_client();
     struct tls_config *config = tls_config_new();
@@ -32,8 +29,6 @@ int run_client(const char *hostname, int port) {
     tls_config_parse_protocols(&protocols, "secure");
     tls_config_set_protocols(config, protocols);
     tls_config_set_ciphers(config, "secure");
-    //tls_config_set_key_file(config, "Docs/mycert.pem");
-    //tls_config_set_cert_file(config, "Docs/mycert.pem");
 
     if (tls_configure(c_tls, config) != 0) {
         perror("tls configure");
@@ -41,7 +36,7 @@ int run_client(const char *hostname, int port) {
         exit(EXIT_FAILURE);
     }
 
-    if (tls_connect_socket(c_tls, server_socket, hostname) != 0) {//crea un nuovo socket
+    if (tls_connect_socket(c_tls, serversock, hostname) != 0) {//crea un nuovo socket
         perror("connect failed");
         exit(EXIT_FAILURE);
     }
@@ -49,7 +44,7 @@ int run_client(const char *hostname, int port) {
     printf("Connessione stabilita\n");
     start_chat(c_tls);
 
-    close(server_socket);
+    close(serversock);
     tls_close(c_tls);
     tls_free(c_tls);
     tls_config_free(config);
@@ -71,8 +66,7 @@ int open_connection_client(const char *hostname, int port) {
     //Assegno ip e porta
     server_addr.sin_family = AF_INET;   //identifica il formato dell'indirizzo
     server_addr.sin_port = htons(port); //numero di porta
-    //server_addr.sin_addr.s_addr = htonl(INADDR_ANY);//*(long *) (host->h_addr); //contiene l'indirizzoIPv4
-    server_addr.sin_addr.s_addr = inet_addr(hostname);
+    server_addr.sin_addr.s_addr = inet_addr(hostname); //trasforma l'indirizzo ip in dati con network order
 
     //apre la connessione
     if (connect(sock, (struct sockaddr *) &server_addr, sizeof(server_addr)) != 0) {

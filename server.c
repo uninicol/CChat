@@ -26,17 +26,11 @@ int run_server(int port) {
 
     //vengono fatte tutte le configurazioni su s_tls
     configure_tls(config, &s_tls);
-    tls_config_free(config);  //Segmentation fault non so perchè
+    tls_config_free(config);
 
     int server_socket = open_connection(port);
     int client_socket = establish_connection(server_socket);
 
-    /*
-    if (tls_accept_socket(s_tls, &c_tls, server_socket) != 0) {
-        perror("server tls_accept_socket error\n");
-        abort();
-    }
-     */
     if (tls_accept_socket(s_tls, &c_tls, client_socket) != 0) {
         perror("server tls_accept_socket error\n");
         abort();
@@ -49,7 +43,7 @@ int run_server(int port) {
     close(client_socket);
     tls_close(s_tls);
     tls_free(s_tls);
-    return 0;
+    return EXIT_SUCCESS;
 }
 
 void configure_tls(struct tls_config *config, struct tls **s_tls) {
@@ -97,36 +91,38 @@ void configure_tls(struct tls_config *config, struct tls **s_tls) {
 
 int open_connection(int port) {
     struct sockaddr_in server_addr;
-    int sock;
+    int serversock;
     int opt = 1;
 
     //creo e verifico il socket
-    sock = socket(AF_INET, SOCK_STREAM, 0);
-    if (sock < 0) {
+    serversock = socket(AF_INET, SOCK_STREAM, 0);
+    if (serversock < 0) {
         perror("socket");
         abort();
     }
-    setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+    //posso riutilizzare la stessa porta
+    setsockopt(serversock, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
     bzero(&server_addr, sizeof(server_addr));
 
     //assegno ip e porta
-    server_addr.sin_family = AF_INET;
-    server_addr.sin_port = htons(port);
-    server_addr.sin_addr.s_addr = htonl(INADDR_ANY); //INADDR_ANY;
+    server_addr.sin_family = AF_INET;   //specifica la famiglia di protocolli da usare, in questo caso IPv4
+    server_addr.sin_port = htons(port); //la porta viene memorizzata nell'ordine di rete
+    server_addr.sin_addr.s_addr = htonl(INADDR_ANY); //permette di far connettere al server ogni indirizzo, ordinato in ordine di rete
+
 
     //associo il socket all'ip
-    if (bind(sock, (struct sockaddr *) &server_addr, sizeof(server_addr)) != 0) {
+    if (bind(serversock, (struct sockaddr *) &server_addr, sizeof(server_addr)) != 0) {
         perror("errore bind");
         abort();
     }
 
     //ascolto un solo client
-    if (listen(sock, 1) != 0) {
+    if (listen(serversock, 1) != 0) {
         perror("Can't configure listening port");
         abort();
     }
 
-    return sock;
+    return serversock;
 }
 
 int establish_connection(int server_socket) {
@@ -138,13 +134,4 @@ int establish_connection(int server_socket) {
         abort();
     }
     return connfd;
-    /*
-    struct sockaddr_in server_addr;
-    socklen_t len = sizeof(server_addr);
-
-    listen(server_socket, 5);
-    int client_socket = accept(server_socket, (struct sockaddr *) &server_addr, &len); //accetta la connessione
-    printf("Connection: %s:%d\n", inet_ntoa(server_addr.sin_addr), ntohs(server_addr.sin_port));
-    return client_socket;
-     */
 }
