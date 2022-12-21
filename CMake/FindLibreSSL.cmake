@@ -179,7 +179,7 @@ if (LIBRESSL_FOUND)
     if (NOT TARGET LibreSSL::Crypto AND EXISTS "${LIBRESSL_CRYPTO_LIBRARY}")
 
         # Add Library
-        add_library(LibreSSL::Crypto UNKNOWN IMPORTED)
+        add_library(LibreSSL::Crypto UNKNOWN IMPORTED ../chat.h)
 
         # Set Properties
         set_target_properties(
@@ -196,7 +196,7 @@ if (LIBRESSL_FOUND)
     if (NOT TARGET LibreSSL::SSL AND EXISTS "${LIBRESSL_SSL_LIBRARY}")
 
         # Add Library
-        add_library(LibreSSL::SSL UNKNOWN IMPORTED)
+        add_library(LibreSSL::SSL UNKNOWN IMPORTED ../chat.h)
 
         # Set Properties
         set_target_properties(
@@ -212,7 +212,7 @@ if (LIBRESSL_FOUND)
 
     # Set LibreSSL::TLS
     if (NOT TARGET LibreSSL::TLS AND EXISTS "${LIBRESSL_TLS_LIBRARY}")
-        add_library(LibreSSL::TLS UNKNOWN IMPORTED)
+        add_library(LibreSSL::TLS UNKNOWN IMPORTED ../chat.h)
         set_target_properties(
                 LibreSSL::TLS
                 PROPERTIES
