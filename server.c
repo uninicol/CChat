@@ -26,7 +26,7 @@ int run_server(int port) {
 
     //vengono fatte tutte le configurazioni su s_tls
     configure_tls(config, &s_tls);
-    tls_config_free(config);
+    tls_config_free(config);  //Segmentation fault non so perchè
 
     int server_socket = open_connection(port);
     int client_socket = establish_connection(server_socket);
@@ -99,6 +99,7 @@ int open_connection(int port) {
     struct sockaddr_in server_addr;
     int sock;
     int opt = 1;
+    setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
 
     //creo e verifico il socket
     sock = socket(AF_INET, SOCK_STREAM, 0);
@@ -106,7 +107,6 @@ int open_connection(int port) {
         perror("socket");
         abort();
     }
-    setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
     bzero(&server_addr, sizeof(server_addr));
 
     //assegno ip e porta
@@ -131,9 +131,9 @@ int open_connection(int port) {
 
 int establish_connection(int server_socket) {
     struct sockaddr_in cli;
-    socklen_t len = sizeof(cli);
-    int connfd = accept(server_socket, (struct sockaddr *) &cli, &len);
-    if (connfd < 0) {
+    int len=sizeof (cli);
+    int connfd = accept(server_socket, (struct sockaddr *) &cli, &len );
+    if(connfd<0 ){
         perror("server accept failed");
         abort();
     }
