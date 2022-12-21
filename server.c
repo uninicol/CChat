@@ -73,12 +73,12 @@ void configure_tls(struct tls_config *config, struct tls **s_tls) {
         abort();
     }
 
-    if (tls_config_set_key_file(config, "../Docs/mycert.pem") != 0) {
+    if (tls_config_set_key_file(config, "Docs/mycert.pem") != 0) {
         perror("server tls_config_set_key_file error\n"); //TODO possiamo chiedere di generarlo automaticamente
         abort();
     }
 
-    if (tls_config_set_cert_file(config, "../Docs/mycert.pem") != 0) {
+    if (tls_config_set_cert_file(config, "Docs/mycert.pem") != 0) {
         perror("server tls_config_set_cert_file error\n"); //TODO possiamo chiedere di generarlo automaticamente
         abort();
     }
