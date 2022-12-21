@@ -32,8 +32,8 @@ int run_client(const char *hostname, int port) {
     tls_config_parse_protocols(&protocols, "secure");
     tls_config_set_protocols(config, protocols);
     tls_config_set_ciphers(config, "secure");
-//    tls_config_set_key_file(config, "../Docs/mycert.pem");
-//    tls_config_set_cert_file(config, "../Docs/mycert.pem");
+    tls_config_set_key_file(config, "Docs/mycert.pem");
+    tls_config_set_cert_file(config, "Docs/mycert.pem");
 
     if (tls_configure(c_tls, config) != 0) {
         perror("tls configure");
