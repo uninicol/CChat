@@ -22,12 +22,11 @@ int run_server(int port) {
     printf("Sono il server porta: %d\n", port);
     struct tls *s_tls = tls_server();
     struct tls *c_tls = NULL;
-    struct tls_config *config;
-
+    struct tls_config *config = NULL;
 
     //vengono fatte tutte le configurazioni su s_tls
     configure_tls(config, &s_tls);
-    //tls_config_free(config);  //Segmentation fault non so perchè
+    tls_config_free(config);  //Segmentation fault non so perchè
 
     int server_socket = open_connection(port);
     int client_socket = establish_connection(server_socket);
@@ -43,6 +42,7 @@ int run_server(int port) {
         abort();
     }
 
+    printf("Connessione stabilita\n");
     start_chat(c_tls);
 
     close(server_socket);

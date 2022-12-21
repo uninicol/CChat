@@ -46,6 +46,7 @@ int run_client(const char *hostname, int port) {
         exit(EXIT_FAILURE);
     }
 
+    printf("Connessione stabilita\n");
     start_chat(c_tls);
 
     close(server_socket);
