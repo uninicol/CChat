@@ -32,8 +32,8 @@ int run_client(const char *hostname, int port) {
     tls_config_parse_protocols(&protocols, "secure");
     tls_config_set_protocols(config, protocols);
     tls_config_set_ciphers(config, "secure");
-    tls_config_set_key_file(config, "Docs/mycert.pem");
-    tls_config_set_cert_file(config, "Docs/mycert.pem");
+    //tls_config_set_key_file(config, "Docs/mycert.pem");
+    //tls_config_set_cert_file(config, "Docs/mycert.pem");
 
     if (tls_configure(c_tls, config) != 0) {
         perror("tls configure");
@@ -62,7 +62,7 @@ int open_connection_client(const char *hostname, int port) {
 
     //PF_INET= inposto il formato dell'indirizzo (ipv4) SOCK_STREAM trasmette i dati come un flusso
     sock = socket(AF_INET, SOCK_STREAM, 0); // imposto la connessione
-    if(sock==-1){
+    if (sock == -1) {
         perror("creazione socket fallita");
         abort();
     }
@@ -72,7 +72,7 @@ int open_connection_client(const char *hostname, int port) {
     server_addr.sin_family = AF_INET;   //identifica il formato dell'indirizzo
     server_addr.sin_port = htons(port); //numero di porta
     //server_addr.sin_addr.s_addr = htonl(INADDR_ANY);//*(long *) (host->h_addr); //contiene l'indirizzoIPv4
-    server_addr.sin_addr.s_addr=inet_addr(hostname);
+    server_addr.sin_addr.s_addr = inet_addr(hostname);
 
     //apre la connessione
     if (connect(sock, (struct sockaddr *) &server_addr, sizeof(server_addr)) != 0) {
