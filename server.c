@@ -99,7 +99,6 @@ int open_connection(int port) {
     struct sockaddr_in server_addr;
     int sock;
     int opt = 1;
-    setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
 
     //creo e verifico il socket
     sock = socket(AF_INET, SOCK_STREAM, 0);
@@ -107,6 +106,7 @@ int open_connection(int port) {
         perror("socket");
         abort();
     }
+    setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
     bzero(&server_addr, sizeof(server_addr));
 
     //assegno ip e porta
@@ -131,9 +131,9 @@ int open_connection(int port) {
 
 int establish_connection(int server_socket) {
     struct sockaddr_in cli;
-    int len=sizeof (cli);
-    int connfd = accept(server_socket, (struct sockaddr *) &cli, &len );
-    if(connfd<0 ){
+    socklen_t len = sizeof(cli);
+    int connfd = accept(server_socket, (struct sockaddr *) &cli, &len);
+    if (connfd < 0) {
         perror("server accept failed");
         abort();
     }
