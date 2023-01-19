@@ -1,8 +1,8 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include "server.h"
-#include "client.h"
+#include "Headers/server.h"
+#include "Headers/client.h"
 
 int main(int argc, char *argv[]) {
     if (argc < 2 || argc > 3)

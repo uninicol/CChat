@@ -1,5 +1,5 @@
-#include "server.h"
-#include "chat.h"
+#include "Headers/server.h"
+#include "Headers/chat.h"
 #include <stdio.h>
 #include <tls.h>
 #include <openssl/aes.h>
@@ -7,7 +7,6 @@
 #include <netinet/in.h>
 #include <stdlib.h>
 #include <string.h>
-#include <arpa/inet.h>
 #include <unistd.h>
 
 #define BUFFER 1024
@@ -19,7 +18,7 @@ int open_connection(int port);
 int establish_connection(int server_socket);
 
 int run_server(int port) {
-    printf("Sono il server porta: %d\n", port);
+    printf("Server in ascolto sulla porta: %d\n", port);
     struct tls *s_tls = tls_server();
     struct tls *c_tls = NULL;
     struct tls_config *config = NULL;
@@ -61,19 +60,19 @@ void configure_tls(struct tls_config *config, struct tls **s_tls) {
 
     tls_config_set_protocols(config, protocols);
 
-    char *ciphers = "AES256";
+    char *ciphers = "ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-SHA384:ECDHE-ECDSA-AES256-SHA384";
     if (tls_config_set_ciphers(config, ciphers) != 0) {
         perror("server tls_config_set_ciphers error\n");
         abort();
     }
 
     if (tls_config_set_key_file(config, "Docs/mycert.pem") != 0) {
-        perror("server tls_config_set_key_file error\n"); //TODO possiamo chiedere di generarlo automaticamente
+        perror("server tls_config_set_key_file error\n");
         abort();
     }
 
     if (tls_config_set_cert_file(config, "Docs/mycert.pem") != 0) {
-        perror("server tls_config_set_cert_file error\n"); //TODO possiamo chiedere di generarlo automaticamente
+        perror("server tls_config_set_cert_file error\n");
         abort();
     }
 

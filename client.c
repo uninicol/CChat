@@ -8,7 +8,7 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <arpa/inet.h>
-#include "chat.h"
+#include "Headers/chat.h"
 
 #define BUFFER 1024 //dimensione del buffer
 
