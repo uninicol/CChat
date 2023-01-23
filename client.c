@@ -16,9 +16,6 @@ int open_connection_client(const char *hostname, int port);
 
 int run_client(const char *hostname, int port) {
     int serversock;
-
-    serversock = open_connection_client(hostname, port);
-
     struct tls *c_tls = tls_client();
     struct tls_config *config = tls_config_new();
 
@@ -35,6 +32,8 @@ int run_client(const char *hostname, int port) {
         tls_error(c_tls);
         exit(EXIT_FAILURE);
     }
+    tls_config_free(config);
+    serversock = open_connection_client(hostname, port);
 
     if (tls_connect_socket(c_tls, serversock, hostname) != 0) {//crea un nuovo socket
         perror("connect failed");
@@ -47,7 +46,6 @@ int run_client(const char *hostname, int port) {
     close(serversock);
     tls_close(c_tls);
     tls_free(c_tls);
-    tls_config_free(config);
     return EXIT_SUCCESS;
 }
 
@@ -63,7 +61,7 @@ int open_connection_client(const char *hostname, int port) {
     }
     bzero(&server_addr, sizeof(server_addr));
 
-    //Assegno ip e porta
+    //Assegno ip e porta del server
     server_addr.sin_family = AF_INET;   //identifica il formato dell'indirizzo
     server_addr.sin_port = htons(port); //numero di porta
     server_addr.sin_addr.s_addr = inet_addr(hostname); //trasforma l'indirizzo ip in dati con network order

@@ -41,12 +41,20 @@ int run_server(int port) {
     close(server_socket);
     close(client_socket);
     tls_close(s_tls);
+    tls_close(c_tls);
     tls_free(s_tls);
+    tls_free(c_tls);
     return EXIT_SUCCESS;
 }
 
 void configure_tls(struct tls_config *config, struct tls **s_tls) {
     config = tls_config_new();
+
+    if (s_tls == NULL) {
+        perror("server tls_server error\n");
+        abort();
+    }
+
     if (config == NULL) {
         perror("tls_config_new error\n");
         abort();
@@ -60,24 +68,18 @@ void configure_tls(struct tls_config *config, struct tls **s_tls) {
 
     tls_config_set_protocols(config, protocols);
 
-    char *ciphers = "ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-SHA384:ECDHE-ECDSA-AES256-SHA384";
-    if (tls_config_set_ciphers(config, ciphers) != 0) {
+    if (tls_config_set_ciphers(config, "secure") != 0) {
         perror("server tls_config_set_ciphers error\n");
         abort();
     }
 
-    if (tls_config_set_key_file(config, "Docs/mycert.pem") != 0) {
+    if (tls_config_set_key_file(config, "Docs/server.key") != 0) {
         perror("server tls_config_set_key_file error\n");
         abort();
     }
 
-    if (tls_config_set_cert_file(config, "Docs/mycert.pem") != 0) {
+    if (tls_config_set_cert_file(config, "Docs/server.crt") != 0) {
         perror("server tls_config_set_cert_file error\n");
-        abort();
-    }
-
-    if (s_tls == NULL) {
-        perror("server tls_server error\n");
         abort();
     }
 
@@ -107,7 +109,6 @@ int open_connection(int port) {
     server_addr.sin_family = AF_INET;   //specifica la famiglia di protocolli da usare, in questo caso IPv4
     server_addr.sin_port = htons(port); //la porta viene memorizzata nell'ordine di rete
     server_addr.sin_addr.s_addr = htonl(INADDR_ANY); //permette di far connettere al server ogni indirizzo, ordinato in ordine di rete
-
 
     //associo il socket all'ip
     if (bind(serversock, (struct sockaddr *) &server_addr, sizeof(server_addr)) != 0) {
