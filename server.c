@@ -18,7 +18,6 @@ int open_connection(int port);
 int establish_connection(int server_socket);
 
 int run_server(int port) {
-    printf("Server in ascolto sulla porta: %d\n", port);
     struct tls *s_tls = tls_server();
     struct tls *c_tls = NULL;
     struct tls_config *config = NULL;
@@ -28,6 +27,7 @@ int run_server(int port) {
     tls_config_free(config);
 
     int server_socket = open_connection(port);
+    printf("Server in ascolto sulla porta: %d\n", port);
     int client_socket = establish_connection(server_socket);
 
     if (tls_accept_socket(s_tls, &c_tls, client_socket) != 0) {
@@ -95,7 +95,6 @@ int open_connection(int port) {
     int serversock;
     int opt = 1;
 
-    //creo e verifico il socket
     serversock = socket(AF_INET, SOCK_STREAM, 0);
     if (serversock < 0) {
         perror("socket");
@@ -106,11 +105,11 @@ int open_connection(int port) {
     bzero(&server_addr, sizeof(server_addr));
 
     //assegno ip e porta
-    server_addr.sin_family = AF_INET;   //specifica la famiglia di protocolli da usare, in questo caso IPv4
-    server_addr.sin_port = htons(port); //la porta viene memorizzata nell'ordine di rete
-    server_addr.sin_addr.s_addr = htonl(INADDR_ANY); //permette di far connettere al server ogni indirizzo, ordinato in ordine di rete
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_port = htons(port);
+    server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
 
-    //associo il socket all'ip
+    //associo il socket all'indirizzo
     if (bind(serversock, (struct sockaddr *) &server_addr, sizeof(server_addr)) != 0) {
         perror("errore bind");
         abort();

@@ -1,7 +1,3 @@
-//
-// Created by nicol on 9/21/22.
-//
-
 #include <strings.h>
 #include <stdio.h>
 #include <tls.h>

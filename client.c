@@ -53,7 +53,6 @@ int open_connection_client(const char *hostname, int port) {
     int sock;
     struct sockaddr_in server_addr;
 
-    //PF_INET= inposto il formato dell'indirizzo (ipv4) SOCK_STREAM trasmette i dati come un flusso
     sock = socket(AF_INET, SOCK_STREAM, 0); // imposto la connessione
     if (sock == -1) {
         perror("creazione socket fallita");
@@ -61,10 +60,10 @@ int open_connection_client(const char *hostname, int port) {
     }
     bzero(&server_addr, sizeof(server_addr));
 
-    //Assegno ip e porta del server
-    server_addr.sin_family = AF_INET;   //identifica il formato dell'indirizzo
-    server_addr.sin_port = htons(port); //numero di porta
-    server_addr.sin_addr.s_addr = inet_addr(hostname); //trasforma l'indirizzo ip in dati con network order
+    //Assegno ip e porta del server dove connettersi
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_port = htons(port);
+    server_addr.sin_addr.s_addr = inet_addr(hostname);
 
     //apre la connessione
     if (connect(sock, (struct sockaddr *) &server_addr, sizeof(server_addr)) != 0) {
